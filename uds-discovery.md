@@ -49,4 +49,17 @@ FT - FORD
 
 UDS Server 0x786 has security and place via 0x27 security access service identifier
 
+At this point we can try to brute force the seed and key which can take days however since we have the uds-server binary we can reverse engineer the firmware with ghidra
+
+![image](https://user-images.githubusercontent.com/47937620/234073927-17a2fad1-6f76-4374-833a-28557908ef63.png)
+
+Within function handle_abs_780 we are able to find not only the seed and key algorithm but also the FLAG:
+
+FLAG{THI5_ECu_15_pwN3d}
+
+
+
+
+
+
 
