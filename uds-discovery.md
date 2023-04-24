@@ -33,7 +33,7 @@ In order to identify which vehicle this module came from we can request to read 
 
 isotprecv -s 780 -d 786 vcan0
 
-cansend vcan0 780#0222F19000000000
+cansend vcan0 780#0322F190
 
 Response: 62 F1 90 31 46 54 56 57 31 45 4C 37 4E 57 47 30 30 36 37
 
