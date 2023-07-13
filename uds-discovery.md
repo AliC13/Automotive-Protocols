@@ -67,12 +67,12 @@ and read it again to verify $cansend vcan0 7f1#0322fa06 62 FA 06 00 00 00
 <br>
 Success
 <br><br>
-This walkthrough only traverses one of the many possible paths to do recon on the different modules and services available, see image below:<br>
+This walkthrough only traverses one of the many possible paths to recon from all the different modules and services available, see image below:<br>
 ![image](https://github.com/IvanGranero/car-hacking/assets/47937620/015899a5-38f1-46a2-bdb7-428555ff6f9f)
 <br>
-for a complete recon all the remaining modules and services within the modules plus subfuntions would have to be discovered and played with.
+for a complete recon of all remaining modules and services within all modules plus subfunctions the same process should repeat
 <br>
-Just to give another quick example if we do a service discovery on module 7e0:
+Just to give another quick example if we do a service discovery on module 7e0 we get the following:
 <br><br>
 Supported service 0x01: Unknown service<br>
 Supported service 0x04: Unknown service<br>
@@ -88,4 +88,4 @@ Supported service 0x2f: INPUT_OUTPUT_CONTROL_BY_IDENTIFIER<br>
 Supported service 0x3e: TESTER_PRESENT<br>
 Supported service 0xba: Unknown service
 <br><br>
-with the above information we can either do a dump_dids o subfunction search, the 0x2f would be a very interesting service to play with. as a hint this module also contains a flag by reading the VIN. Have fun!
+with the above information we can either do a dump_dids o subfunction search as we did before, the 0x2f would be a very interesting service to play with. as a hint this module also contains a flag by reading the VIN. Have fun!
