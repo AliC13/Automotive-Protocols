@@ -66,9 +66,9 @@ Let's now try to write data $cansend vcan0 7f1#062efa06000000 6E FA 06
 and read it again to verify $cansend vcan0 7f1#0322fa06 62 FA 06 00 00 00
 <br>
 Success
-<br>
+<br><br><br>
 ![image](https://github.com/IvanGranero/car-hacking/assets/47937620/015899a5-38f1-46a2-bdb7-428555ff6f9f)
-<br>
+<br><br>
 This walkthrough only traverses one of the many possible paths to do recon on the different modules and services available for a complete recon all the remaining modules and services within the modules plus subfuntions would have to be discovered and played with.
 <br>
 Just to give another quick example if we do a service discovery on module 7e0:<br>
