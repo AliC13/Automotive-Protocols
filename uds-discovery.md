@@ -37,8 +37,8 @@ Sub-function fa 01<br>
 Sub-function fa 02<br>
 Sub-function fa 06<br>
 <br>
-From the list above we can see the subfunctions FA 00 to FA 06 which are subfunctions reserved for Airbag Deployment Data (see reference below) https://piembsystech.com/data-identifiers-did-of-uds-protocol-iso-14229/
-<br>
+From the list above we can see the subfunctions FA 00 to FA 06 which are subfunctions reserved for Airbag Deployment Data (see reference below)<br>https://piembsystech.com/data-identifiers-did-of-uds-protocol-iso-14229/
+<br><br>
 Once we have a list of subfunctions we could read the data out and also we could write data in
 <br>
 Keeping in mind that this is an airbag module before reading or writing is permitted the diagnostic session should be raise from default session 0x01 to Safety system Diagnostic system session 0x04
