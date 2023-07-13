@@ -71,7 +71,8 @@ Success
 <br><br>
 This walkthrough only traverses one of the many possible paths to do recon on the different modules and services available for a complete recon all the remaining modules and services within the modules plus subfuntions would have to be discovered and played with.
 <br>
-Just to give another quick example if we do a service discovery on module 7e0:<br>
+Just to give another quick example if we do a service discovery on module 7e0:
+<br><br>
 Supported service 0x01: Unknown service<br>
 Supported service 0x04: Unknown service<br>
 Supported service 0x09: Unknown service<br>
@@ -85,5 +86,5 @@ Supported service 0x2e: WRITE_DATA_BY_IDENTIFIER<br>
 Supported service 0x2f: INPUT_OUTPUT_CONTROL_BY_IDENTIFIER<br>
 Supported service 0x3e: TESTER_PRESENT<br>
 Supported service 0xba: Unknown service
-<br>
+<br><br>
 with the above information we can either do a dump_dids o subfunction search, the 0x2f would be a very interesting service to play with. as a hint this module also contains a flag by reading the VIN. Have fun!
