@@ -26,11 +26,14 @@ This repository contains a UDS (Unified Diagnostic Services) server implementati
    ```bash
    git clone https://github.com/IvanGranero/Automotive-Protocols.git
    cd Automotive-Protocols
+   ```
 
 ## Usage
 1. Run the UDS server:
    ```bash
    python uds-server.py
+   ```
+   
 2. The server will start listening for UDS diagnostic requests on the specified IP and port. 
 
 ## Configuration
@@ -46,7 +49,7 @@ Example configuration snippet in uds-server.py:
    ```bash
   SERVER_IP = '127.0.0.1'
   SERVER_PORT = 5000
-
+   ```
 
 ## Contributing
 Contributions are welcome! Please follow these steps:
