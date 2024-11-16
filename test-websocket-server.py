@@ -17,9 +17,9 @@ async def handle_client(websocket):
         print("Client disconnected")
 
 async def main():
-    server = await websockets.serve(handle_client, "localhost", 8080)
+    server = await websockets.serve(handle_client, "192.168.56.101", 8080)
     print("Server started")
-    print("Listening on ws://localhost:8080")
+    print("Listening on ws://192.168.56.101:8080")
     print("Waiting for clients to connect....")
     await server.wait_closed()
 

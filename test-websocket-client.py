@@ -3,7 +3,7 @@ import websockets
 import json
 
 async def connect_and_send():
-    uri = "ws://localhost:8080"  # Replace with your WebSocket server URL
+    uri = "ws://192.168.56.101:8080"  # Replace with your WebSocket server URL
     
     try:
         async with websockets.connect(uri) as websocket:
