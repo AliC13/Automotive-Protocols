@@ -8,7 +8,7 @@ import random
 import asyncio
 import websockets
 
-IP = "localhost"
+IP = "192.168.56.101"
 PORT = 8080
 
 global_websocket = None
