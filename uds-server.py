@@ -5,6 +5,13 @@ import sys
 import can
 import time
 import random
+import asyncio
+import websockets
+
+IP = "localhost"
+PORT = 8080
+
+global_websocket = None
 
 VIN = "1FMCU9C74AKB96069"
 clean, longdata = range(2)
@@ -80,6 +87,7 @@ def handle_data(payload, pkt_len):
 			print ("Request Vehicle Information")		
 			if len(payload) < 6:
 				send_msg(0x7E8, [0x03, 0x7F, id, 0x13]) #incorrectMessageLengthOrInvalidFormat
+				send_msg_to_client("engineon") #EXAMPLE!!!!!!!!
 				return
 			pid = int(payload[3:5],16)
 			if pid == 0x00:
@@ -270,9 +278,59 @@ def key_from_seed(seed):
 #    return "%02X %02X %02X" % ( (key & 0xff0000) >> 16, (key & 0xff00) >> 8, key & 0xff) 
     return [(key & 0xff0000) >> 16, (key & 0xff00) >> 8, key & 0xff]
 
+
+#-----------------Vehicle Status-----------------
+vehicle_controls_status = {
+	"engineon": send_msg(0x7E8, [0x02, 0x40, 0x01]), #example hex values
+	"engineoff": send_msg(0x7E8, [0x02, 0x40, 0x00]),
+	"wiperson": send_msg(0x7E8, [0x02, 0x40, 0x01]),
+	"wipersoff": send_msg(0x7E8, [0x02, 0x40, 0x00]),
+	"headlightson": send_msg(0x7E8, [0x02, 0x40, 0x01]),
+	"headlightsoff": send_msg(0x7E8, [0x02, 0x40, 0x00]),
+	"radioon": send_msg(0x7E8, [0x02, 0x40, 0x01]),
+	"radiooff": send_msg(0x7E8, [0x02, 0x40, 0x00]),
+	"dooropen": send_msg(0x7E8, [0x02, 0x40, 0x01]),
+	"doorolose": send_msg(0x7E8, [0x02, 0x40, 0x00])
+}
+#------------------------------------------------
+
+async def send_msg_to_client(message): # Send message to the client
+    global global_websocket
+    if global_websocket:
+        print(f"Sending message: {message}")
+        await global_websocket.send(message)
+    else:
+        print("No client connected")
+
+async def handle_client_msg(websocket): # Receive message from the client
+    global global_websocket
+    global_websocket = websocket
+    print("Client connected")
+    try:
+        async for message in websocket:
+            print(f"Received message: {message}")
+            action = vehicle_controls_status.get(message) # Get the function call from the dictionary
+            if action:
+                action()		# Call the function	
+            else:
+                # await send_msg_to_client(f"Unknown command: {message}")
+                print(f"Unknown command: {message}")
+    except websockets.ConnectionClosed:
+        print("Client disconnected")
+        global_websocket = None
+
+async def start_server(): # async can handle multiple clients
+    server = await websockets.serve(handle_client_msg, IP, PORT)
+    print("Server started")
+    print("Listening on ws://localhost:8080")
+    print("Waiting for clients to connect....")
+    await server.wait_closed()
+
 def main():
 	global can_id
-
+ 
+	asyncio.run(start_server()) # Start the server
+ 
 	if(len(sys.argv) < 2):
 		print ("Usage: %s <can interface> " % (sys.argv[0]))
 		sys.exit(1)
