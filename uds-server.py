@@ -326,11 +326,11 @@ async def start_server(): # async can handle multiple clients
     print("Waiting for clients to connect....")
     await server.wait_closed()
 
-def main():
+async def main():
 	global can_id
  
-	asyncio.run(start_server()) # Start the server
- 
+	server_task = asyncio.create_task(start_server()) # Start the server
+  
 	if(len(sys.argv) < 2):
 		print ("Usage: %s <can interface> " % (sys.argv[0]))
 		sys.exit(1)
@@ -346,6 +346,9 @@ def main():
 	#change while true to a Thread process
 	try:
 		while True:
+			# Allow other tasks to run
+			await asyncio.sleep(0)
+   
 			msg, data = recv_msg()
 			can_id = msg.arbitration_id
 			data_type = data[0:2]
@@ -399,6 +402,7 @@ def main():
 	#				print("wait")
 				pass		
 			#print data
+   
 	except KeyboardInterrupt:
 		print("Keyboard interrupt...")
 		bus.shutdown()
@@ -408,7 +412,7 @@ def main():
 if __name__ == '__main__':
 	while True:
 		try:
-			main()
+			asyncio.run(main())
 			break # stop the loop if the function completes sucessfully
 		except Exception as e:
 			print("Function errored out!", e)
