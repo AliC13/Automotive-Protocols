@@ -1,17 +1,15 @@
 #!/usr/bin/python
 #!/usr/bin/env python3
 
+
 import sys
 import can
 import time
 import random
-import asyncio
-import websockets
+import socket
 
-IP = "192.168.56.101"
-PORT = 8080
-
-global_websocket = None
+IP = '127.0.0.1'
+PORT = 5001
 
 VIN = "1FMCU9C74AKB96069"
 clean, longdata = range(2)
@@ -22,6 +20,8 @@ session = 1
 security_access = 0
 attempts = 0
 key = None
+
+
 
 services = {	
 		0x10: "DiagnosticSessionControl",
@@ -74,20 +74,40 @@ def handle_data(payload, pkt_len):
 	if len(payload) < 2: return	
 	id = int(payload[0:2],16)
 	id_s = get_id_string(id)
-	if can_id == 0x736:
+	if can_id == 0x123:
 		#Parking Assist Module reply to 0x73E
-		print ("PAM Module")
-	elif can_id == 0x726:
+		print ("ECM Module")
+		if id == 0x3E:
+			if (verbose): print ("Tester Present")
+			security_access = 0					
+			if len(payload) < 2:
+				send_msg(0x321, [0x03, 0x7F, id, 0x13]) #incorrectMessageLengthOrInvalidFormat			
+				return
+			pid = int(payload[3:5],16)
+			if pid == 0x01:
+				session = 1			
+				send_msg(0x321, [0x02, id+0x40, pid]) 
+				send_msg(0x321, [0x10, 0x21, 0x66, 0x6C, 0x61, 0x67, 0x7B, 0x62]) 
+				send_msg(0x321, [0x21, 0x6C, 0x61, 0x73, 0x74, 0x6F, 0x66, 0x66])
+				send_msg(0x321, [0x22, 0x7D])
+				client_sock.sendall(b"START CAR!!!!!!!!!!!!!!")
+
+			else:
+				session = 1
+				send_msg(0x321, [0x03, 0x7F, id, 0x11]) #subfunctionNotSupported		
+
+
+
+	elif can_id == 0x456:
 		#Chassis Computer SJB module reply to 0x72E
-		print ("SJB module")
-	elif can_id == 0x7E0:
+		print ("BCM module")
+	elif can_id == 0x789:
 		#PowerTrain Control Module reply to 0x7E8
-		print ("PCM Module")
+		print ("BSCM Module")
 		if id == 0x09:	# Request Vehicle Information
 			print ("Request Vehicle Information")		
 			if len(payload) < 6:
 				send_msg(0x7E8, [0x03, 0x7F, id, 0x13]) #incorrectMessageLengthOrInvalidFormat
-				send_msg_to_client("engineon") #EXAMPLE!!!!!!!!
 				return
 			pid = int(payload[3:5],16)
 			if pid == 0x00:
@@ -278,60 +298,9 @@ def key_from_seed(seed):
 #    return "%02X %02X %02X" % ( (key & 0xff0000) >> 16, (key & 0xff00) >> 8, key & 0xff) 
     return [(key & 0xff0000) >> 16, (key & 0xff00) >> 8, key & 0xff]
 
-
-#-----------------Vehicle Status-----------------
-vehicle_controls_status = {
-	"engineon": send_msg(0x7E8, [0x02, 0x40, 0x01]), #example hex values
-	"engineoff": send_msg(0x7E8, [0x02, 0x40, 0x00]),
-	"wiperson": send_msg(0x7E8, [0x02, 0x40, 0x01]),
-	"wipersoff": send_msg(0x7E8, [0x02, 0x40, 0x00]),
-	"headlightson": send_msg(0x7E8, [0x02, 0x40, 0x01]),
-	"headlightsoff": send_msg(0x7E8, [0x02, 0x40, 0x00]),
-	"radioon": send_msg(0x7E8, [0x02, 0x40, 0x01]),
-	"radiooff": send_msg(0x7E8, [0x02, 0x40, 0x00]),
-	"dooropen": send_msg(0x7E8, [0x02, 0x40, 0x01]),
-	"doorolose": send_msg(0x7E8, [0x02, 0x40, 0x00])
-}
-#------------------------------------------------
-
-async def send_msg_to_client(message): # Send message to the client
-    global global_websocket
-    if global_websocket:
-        print(f"Sending message: {message}")
-        await global_websocket.send(message)
-    else:
-        print("No client connected")
-
-async def handle_client_msg(websocket): # Receive message from the client
-    global global_websocket
-    global_websocket = websocket
-    print("Client connected")
-    try:
-        async for message in websocket:
-            print(f"Received message: {message}")
-            action = vehicle_controls_status.get(message) # Get the function call from the dictionary
-            if action:
-                action()		# Call the function	
-            else:
-                # await send_msg_to_client(f"Unknown command: {message}")
-                print(f"Unknown command: {message}")
-    except websockets.ConnectionClosed:
-        print("Client disconnected")
-        global_websocket = None
-
-async def start_server(): # async can handle multiple clients
-    server = await websockets.serve(handle_client_msg, IP, PORT)
-    print("Server started")
-    print("Listening on ws://localhost:8080")
-    print("Waiting for clients to connect....")
-    await server.wait_closed()
-
-async def main():
+def main():
 	global can_id
- 
-	# server_task = asyncio.create_task(start_server()) # Start the server
-	async def star_server();
-  
+
 	if(len(sys.argv) < 2):
 		print ("Usage: %s <can interface> " % (sys.argv[0]))
 		sys.exit(1)
@@ -347,9 +316,6 @@ async def main():
 	#change while true to a Thread process
 	try:
 		while True:
-			# Allow other tasks to run
-			await asyncio.sleep(0)
-   
 			msg, data = recv_msg()
 			can_id = msg.arbitration_id
 			data_type = data[0:2]
@@ -403,7 +369,6 @@ async def main():
 	#				print("wait")
 				pass		
 			#print data
-   
 	except KeyboardInterrupt:
 		print("Keyboard interrupt...")
 		bus.shutdown()
@@ -411,10 +376,18 @@ async def main():
 
 
 if __name__ == '__main__':
+	server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+	server_socket.bind((IP, PORT))
+	server_socket.listen(1)
+	print(f"Server listening on {IP}:{PORT}")
+	
 	while True:
 		try:
-			asyncio.run(main())
+			client_sock, addr = server_socket.accept()
+			print(f"Accepted connection from {addr}")
+			main()
 			break # stop the loop if the function completes sucessfully
 		except Exception as e:
 			print("Function errored out!", e)
 			print("Retrying ... ")
+
